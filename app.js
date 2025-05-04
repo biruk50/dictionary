@@ -27,7 +27,11 @@ function binarySearch(words, target) {
   return false;
 }
 
-function searchWord() {
+let isLoading = false; // Track if a search is in progress
+
+async function searchWord() {
+  if (isLoading) return; // Prevent multiple simultaneous searches
+
   const word = document.getElementById("wordInput").value.trim().toLowerCase();
   const resultDiv = document.getElementById("result");
   const definitionDiv = document.getElementById("definition");
@@ -43,7 +47,7 @@ function searchWord() {
   // Check if the word is cached in localStorage
   const cachedDefinition = localStorage.getItem(word);
   if (cachedDefinition) {
-    resultDiv.textContent = `Word found! Looking up definition...`;
+    resultDiv.textContent = `Word found in cache!`;
     definitionDiv.innerHTML = cachedDefinition;
     return;
   }
@@ -51,22 +55,24 @@ function searchWord() {
   if (binarySearch(dictionary, word)) {
     resultDiv.textContent = `Word found! Looking up definition...`;
 
-    // Make API call
-    fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`)
-      .then((response) => {
-        if (!response.ok) throw new Error("Definition not found");
-        return response.json();
-      })
-      .then((data) => {
-        const formattedDefinition = formatDefinition(data[0]);
-        definitionDiv.innerHTML = formattedDefinition;
+    isLoading = true; // Set loading state to true
+    try {
+      const response = await fetch(
+        `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`
+      );
+      if (!response.ok) throw new Error("Definition not found");
 
-        // Cache the definition in localStorage
-        localStorage.setItem(word, formattedDefinition);
-      })
-      .catch((error) => {
-        definitionDiv.textContent = "Definition not available";
-      });
+      const data = await response.json();
+      const formattedDefinition = formatDefinition(data[0]);
+      definitionDiv.innerHTML = formattedDefinition;
+
+      // Cache the definition in localStorage
+      localStorage.setItem(word, formattedDefinition);
+    } catch (error) {
+      definitionDiv.textContent = "Definition not available";
+    } finally {
+      isLoading = false; // Reset loading state
+    }
   } else {
     resultDiv.textContent = "Word not found in dictionary";
   }
