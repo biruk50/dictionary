@@ -1,18 +1,22 @@
 let dictionary = [];
 
-// Load dictionary
-fetch("words_alpha.txt")
-  .then((response) => response.text())
-  .then((text) => {
+// Call the function to load the dictionary
+loadDictionary();
+
+async function loadDictionary() {
+  try {
+    const response = await fetch("words_alpha.txt");
+    const text = await response.text();
     dictionary = text
       .split("\n")
       .map((word) => word.trim().toLowerCase())
       .sort();
-  })
-  .catch((error) => {
-    console.error("Error loading dictionary:", error);
+  } catch (error) {
     document.getElementById("result").textContent = "Error loading dictionary";
-  });
+  }
+}
+
+
 
 function binarySearch(words, target) {
   let left = 0;
